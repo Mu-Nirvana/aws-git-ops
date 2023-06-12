@@ -1,0 +1,7 @@
+RDS_DB_NAME:
+  generator_class: rds.go
+infraConfig:
+  EKS_CLUSTER:
+    generator_class: eks.go
+  REDIS_ENDPOINT:
+    generator_class: redis.go
