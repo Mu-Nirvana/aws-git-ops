@@ -38,3 +38,5 @@ class rds
 The tool generates new YAML values for each attribute key
 
 [generated output](outputs/dev-env-output.yml)
+
+Note the changes in values. When there's no generator_class specified for any attribute, like REGION, treat it as static. That is, generate it without change in output based on input. 
