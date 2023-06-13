@@ -43,13 +43,21 @@ func main() {
   fmt.Println("Hello there", strings.Join(inputFiles, " "))
  
   // Read file
-  file, err := os.ReadFile(inputFiles[0])
-  reportError("file op: ", err) 
+  var files [][]byte
+  for _, path := range inputFiles {
+    file, err := os.ReadFile(path)
+    files = append(files, file) 
+    reportError("file op: ", err) 
+  }
 
   // Load yaml
-  var fileYaml map[string]interface{}
-  err = yaml.Unmarshal(file, &fileYaml)
-  reportError("yaml: ", err)
+  var yamls []map[string]interface{}
+  for _, file := range files {
+    var yamlFile map[string]interface{}
+    err := yaml.Unmarshal(file, &yamlFile)
+    yamls = append(yamls, yamlFile)
+    reportError("yaml: ", err)
+  }
 
-  fmt.Println(fileYaml)
+  fmt.Println(yamls)
 }
