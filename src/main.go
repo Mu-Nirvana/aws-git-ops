@@ -8,6 +8,13 @@ import (
   "gopkg.in/yaml.v3"
 )
 
+type yamlDoc map[string]interface{}
+
+type Input struct {
+  DBName string `yaml:"RDS_DB_NAME"`
+  Infra []map[string]string `yaml:"infraConfig"`
+}
+
 // Throw appropriate error if the file does not exist
 func checkFile(path string) {
   _, err := os.Stat(path)
@@ -31,6 +38,14 @@ func reportError(prefix string, err error) {
   log.Fatal(err)
 }
 
+func (yamlIn yamlDoc) readYaml(keys ...string) {
+  var next yamlDoc = yamlIn
+  fmt.Println(next)
+  for _, key := range keys[:len(keys)-1] {
+    next = next[key].(yamlDoc)
+  }
+  fmt.Println(next[keys[len(keys)-1]])
+}
 
 // --------------- Main ---------------
 
@@ -51,13 +66,18 @@ func main() {
   }
 
   // Load yaml
-  var yamls []map[string]interface{}
+  var yamls []Input
   for _, file := range files {
-    var yamlFile map[string]interface{}
+    var yamlFile Input
     err := yaml.Unmarshal(file, &yamlFile)
     yamls = append(yamls, yamlFile)
     reportError("yaml: ", err)
   }
 
   fmt.Println(yamls)
+  fmt.Println(yamls[0].Infra[0]["EKS_CLUSTER"])
+
+  data, _ := yaml.Marshal(yamls[0])
+  fmt.Print(string(data))
+  //yamls[0].readYaml("infraConfig", "EKS_CLUSTER")
 }
