@@ -4,16 +4,12 @@ import (
   "fmt"
   "os"
   "log"
-  "strings"
+  _ "strings"
   "gopkg.in/yaml.v3"
+  "errors"
 )
 
-type yamlDoc map[string]interface{}
-
-type Input struct {
-  DBName string `yaml:"RDS_DB_NAME"`
-  Infra []map[string]string `yaml:"infraConfig"`
-}
+type YAML map[interface{}]interface{}
 
 // Throw appropriate error if the file does not exist
 func checkFile(path string) {
@@ -38,13 +34,47 @@ func reportError(prefix string, err error) {
   log.Fatal(err)
 }
 
-func (yamlIn yamlDoc) readYaml(keys ...string) {
-  var next yamlDoc = yamlIn
-  fmt.Println(next)
-  for _, key := range keys[:len(keys)-1] {
-    next = next[key].(yamlDoc)
+// Read a value from a yaml document 
+func (yamlIn YAML) readYaml(keys ...interface{}) (interface{}, error){
+  var next interface{} = yamlIn
+  for i, key := range keys {
+    switch next.(type){
+    case YAML:
+      switch key.(type) {
+      case string:
+        next = next.(YAML)[key.(string)]
+      case int:
+        next = next.(YAML)[key.(int)]
+      default:
+        return nil, errors.New("string or int indicies only")
+      }
+    case map[string]interface{}:
+      switch key.(type) {
+      case string:
+        next = next.(map[string]interface{})[key.(string)]
+      default:
+        return nil, errors.New("cannot use non string for a string key")
+      }
+    case []interface{}:
+      switch key.(type) {
+      case string:
+        return nil, errors.New("cannot use string to index list") 
+      case int:
+        next = next.([]interface{})[key.(int)]
+      default:
+        return nil, errors.New("string or int indicies only")
+      }
+    default:
+      return nil, errors.New("Unknown yaml structure") 
+    }
+    if next == nil {
+      return nil, errors.New("Invalid index")
+    }
+    if i == len(keys)-1 {
+      return next, nil
+    }
   }
-  fmt.Println(next[keys[len(keys)-1]])
+  return nil, errors.New("internal failure")
 }
 
 // --------------- Main ---------------
@@ -55,7 +85,7 @@ func main() {
   for _, path := range inputFiles {
     checkFile(path)
   }
-  fmt.Println("Hello there", strings.Join(inputFiles, " "))
+  //fmt.Println("Hello there", strings.Join(inputFiles, " "))
  
   // Read file
   var files [][]byte
@@ -66,18 +96,18 @@ func main() {
   }
 
   // Load yaml
-  var yamls []Input
+  var yamls []YAML
   for _, file := range files {
-    var yamlFile Input
+    var yamlFile YAML
     err := yaml.Unmarshal(file, &yamlFile)
     yamls = append(yamls, yamlFile)
     reportError("yaml: ", err)
   }
 
-  fmt.Println(yamls)
-  fmt.Println(yamls[0].Infra[0]["EKS_CLUSTER"])
+  data, err := yamls[0].readYaml("INDEX")
+  reportError("yaml: ", err)
+  value, err := yamls[0].readYaml(data.([]interface{})...)
+  reportError("yaml: ", err)
 
-  data, _ := yaml.Marshal(yamls[0])
-  fmt.Print(string(data))
-  //yamls[0].readYaml("infraConfig", "EKS_CLUSTER")
+  fmt.Println(value)
 }
