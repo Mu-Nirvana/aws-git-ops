@@ -77,6 +77,50 @@ func (yamlIn YAML) readYaml(keys ...interface{}) (interface{}, error){
   return nil, errors.New("internal failure")
 }
 
+// Write a value in a yaml document 
+func (yamlIn YAML) readYaml(value interface{}, keys ...interface{}) (YAML, error){
+  var next interface{} = &yamlIn
+  for i, key := range keys {
+    switch next.(type){
+    case YAML:
+      switch key.(type) {
+      case string:
+        next = &next.(YAML)[key.(string)]
+      case int:
+        next = &next.(YAML)[key.(int)]
+      default:
+        return nil, errors.New("string or int indicies only")
+      }
+    case map[string]interface{}:
+      switch key.(type) {
+      case string:
+        next = &next.(map[string]interface{})[key.(string)]
+      default:
+        return nil, errors.New("cannot use non string for a string key")
+      }
+    case []interface{}:
+      switch key.(type) {
+      case string:
+        return nil, errors.New("cannot use string to index list") 
+      case int:
+        next = &next.([]interface{})[key.(int)]
+      default:
+        return nil, errors.New("string or int indicies only")
+      }
+    default:
+      return nil, errors.New("Unknown yaml structure") 
+    }
+    if next == nil {
+      return nil, errors.New("Invalid index")
+    }
+    if i == len(keys)-1 {
+      next = value
+      return yamlIn, nil
+    }
+  }
+  return nil, errors.New("internal failure")
+}
+
 // --------------- Main ---------------
 
 func main() {
@@ -88,8 +132,7 @@ func main() {
   //fmt.Println("Hello there", strings.Join(inputFiles, " "))
  
   // Read file
-  var files [][]byte
-  for _, path := range inputFiles {
+  var files [][]byte for _, path := range inputFiles {
     file, err := os.ReadFile(path)
     files = append(files, file) 
     reportError("file op: ", err) 
