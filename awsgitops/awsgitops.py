@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-from modules import *
+from .modules import *
 import sys
 import importlib
 from copy import deepcopy
@@ -13,7 +12,7 @@ def check_files(files):
 
 # Load the generator classes and create a shared status object
 def load_generators(generator_config):
-    generators = {module_name: getattr(importlib.import_module(f"generators.{module_name}"), module_name) for module_name in generator_config.keys()}
+    generators = {module_name: getattr(importlib.import_module(f"awsgitops.generators.{module_name}"), module_name) for module_name in generator_config.keys()}
 
     status = {"Status": "Not Started", "isProvisioned": "", "isWired": "", "isValid": "", "getData": "", "generateData": "", "FAILED": False}
     statuses = {generator: status for generator in generators.keys()}
@@ -57,6 +56,3 @@ def main():
 
     print(input_yaml)
     print(output_yaml)
-
-if __name__ == "__main__":
-    main()

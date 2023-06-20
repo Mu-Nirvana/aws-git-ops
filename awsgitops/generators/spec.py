@@ -1,8 +1,7 @@
 import sys
-sys.path.append('../')
-from modules import util
+from ..modules import util
 
-class generator_spec():
+class spec():
     status = None
     confg = None
     yaml_lock = None
