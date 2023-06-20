@@ -1,10 +1,9 @@
 import sys
-sys.path.append('../')
-from .generator_spec import generator_spec
-from modules import util
+from .spec import spec
+from ..modules import util
 from time import sleep
 
-class dummy(generator_spec):
+class dummy(spec):
     new_data = None
     
     @classmethod
