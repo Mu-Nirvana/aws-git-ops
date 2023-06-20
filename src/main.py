@@ -1,16 +1,19 @@
+#!/usr/bin/env python3
 from modules import *
 import sys
+import importlib
+from copy import deepcopy
 from threading import Lock, Thread
 
 # Check if the files exist
 def check_files(files):
-    for arg in files
+    for arg in files:
         if not file_ops.check_file(arg):
             util.error(f"Check path file {arg} does not exist!")
 
 # Load the generator classes and create a shared status object
 def load_generators(generator_config):
-    generators = {module_name: __import__(f"generators.{module_name}").getattr(module_name) for module_name in generator_config.keys()}
+    generators = {module_name: getattr(importlib.import_module(f"generators.{module_name}"), module_name) for module_name in generator_config.keys()}
 
     status = {"Status": "Not Started", "isProvisioned": "", "isWired": "", "isValid": "", "getData": "", "generateData": "", "FAILED": False}
     statuses = {generator: status for generator in generators.keys()}
@@ -24,7 +27,7 @@ def configure_generators(generators, statuses, generator_config, yaml):
 
     for generator in generators.values():
         generator.config(generator_config, statuses, mutex)
-        threads.append(target=generator.run, args=(yaml))
+        threads.append(Thread(target=generator.run, args=(yaml,)))
 
     return threads
 
@@ -37,10 +40,11 @@ def main():
     # Load yamls
     generator_config = file_ops.get_yaml(file_args[0])
     input_yaml = file_ops.get_yaml(file_args[1]) 
+    output_yaml = deepcopy(input_yaml)
 
     #Load and configure generators
     gens, status = load_generators(generator_config)
-    threads = configure_generators(gens, status, generator_config, input_yaml)
+    threads = configure_generators(gens, status, generator_config, output_yaml)
 
     # Start generators
     for thread in threads:
@@ -48,6 +52,8 @@ def main():
 
     #Wait for first generator to finish (testing)
     threads[0].join()
+    print(input_yaml)
+    print(output_yaml)
 
 if __name__ == "__main__":
     main()

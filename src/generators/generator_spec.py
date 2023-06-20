@@ -1,4 +1,6 @@
-from ..modules import util
+import sys
+sys.path.append('../')
+from modules import util
 
 class generator_spec():
     status = None
@@ -6,48 +8,56 @@ class generator_spec():
     yaml_lock = None
 
     # Abstract
-    def is_provisioned():
+    @classmethod
+    def is_provisioned(cls):
         return True
 
     # Abstract
-    def is_wired():
+    @classmethod
+    def is_wired(cls):
         return True
     
     # Abstract
-    def is_valid():
+    @classmethod
+    def is_valid(cls):
         return True
 
     # Abstract
-    def get_data():
+    @classmethod
+    def get_data(cls):
         return True
 
     # Abstract
-    def generate_yaml(yaml):
+    @classmethod
+    def generate_yaml(cls, yaml):
         return True
 
     # Run all stages of the generator
-    def run(yaml):
-        if status == None or config == None or yaml_lock == None:
+    @classmethod
+    def run(cls, yaml):
+        if cls.status == None or cls.config == None or cls.yaml_lock == None:
             util.error(f"Generator {__class__.__name__} has not been fully configured")    
 
-        stages = (("Running isProvisioned", is_provisioned, []), ("Running isWired", is_wired, []), ("Running isValid", is_valid, []), ("Running getData", get_data, []), ("Running generateYaml", generate_yaml, [yaml])) 
+        stages = (("Running isProvisioned", cls.is_provisioned, []), ("Running isWired", cls.is_wired, []), ("Running isValid", cls.is_valid, []), ("Running getData", cls.get_data, []), ("Running generateYaml", cls.generate_yaml, [yaml])) 
 
-        set_status("Started")
+        cls.set_status("Started")
         
         for stage in stages:
-            set_status(stage[0])
+            cls.set_status(stage[0])
             if not stage[1](*stage[2]):
-                status["FAILED"] = True
-                set_status(f"FAILED")
+                cls.status["FAILED"] = True
+                cls.set_status(f"FAILED")
                 return 1
 
-        set_status("FINISHED")
+        cls.set_status("FINISHED")
     
     # Set the generators status
-    def set_status(status_msg):
-        status[__class__.__name__]["Status"] = status_msg
+    @classmethod
+    def set_status(cls, status_msg):
+        cls.status[cls.__name__]["Status"] = status_msg
 
-    def config(generator_config, status_object, mutex):
-        config = generator_config
-        status = status_object
-        yaml_lock = mutex
+    @classmethod
+    def config(cls, generator_config, status_object, mutex):
+        cls.config = generator_config
+        cls.status = status_object
+        cls.yaml_lock = mutex
