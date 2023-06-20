@@ -51,7 +51,10 @@ def main():
         thread.start()
 
     #Wait for first generator to finish (testing)
-    threads[0].join()
+    while threads[0].is_alive():
+        print('\033[2K', status, end='\r')
+    print(status)
+
     print(input_yaml)
     print(output_yaml)
 

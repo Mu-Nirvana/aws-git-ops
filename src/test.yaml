@@ -1,1 +1,9 @@
+RANDOM: other data
+LIST:
+- 1
+- 2
+- 6
 TEST: data
+MAP:
+  VALUE: 1
+  OTHER: 2

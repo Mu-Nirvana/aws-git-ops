@@ -61,3 +61,7 @@ class generator_spec():
         cls.config = generator_config
         cls.status = status_object
         cls.yaml_lock = mutex
+
+    @classmethod
+    def set_details(cls, stage, message):
+        cls.status[cls.__name__][stage] = message
