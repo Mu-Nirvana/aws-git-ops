@@ -4,6 +4,8 @@ import importlib
 from copy import deepcopy
 from threading import Lock, Thread
 
+__version__ = "0.3.0"
+
 # Check if the files exist
 def check_files(files):
     for arg in files:
