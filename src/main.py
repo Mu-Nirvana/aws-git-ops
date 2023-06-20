@@ -2,22 +2,17 @@ from modules import *
 import sys
 from threading import Lock, Thread
 
-# Report an error and exit the program
-def error(contents):
-    print(f"ERROR: {contents}\nExiting program!")
-    exit(1)
-
 # Check if the files exist
 def check_files(files):
-    for arg in args:
+    for arg in files
         if not file_ops.check_file(arg):
-            error(f"Check path file {arg} does not exist!")
+            util.error(f"Check path file {arg} does not exist!")
 
 # Load the generator classes and create a shared status object
 def load_generators(generator_config):
     generators = {module_name: __import__(f"generators.{module_name}").getattr(module_name) for module_name in generator_config.keys()}
 
-    status = {"Status": "Not Started", "isProvisioned": "", "isWired": "", "isValid": "", "getData": "", "updateData": ""}
+    status = {"Status": "Not Started", "isProvisioned": "", "isWired": "", "isValid": "", "getData": "", "generateData": "", "FAILED": False}
     statuses = {generator: status for generator in generators.keys()}
 
     return generators, statuses
@@ -28,9 +23,7 @@ def configure_generators(generators, statuses, generator_config, yaml):
     threads = []
 
     for generator in generators.values():
-        generator.set_status(statuses)
-        generator.set_config(generator_config)
-        generator.set_mutex(mutex)
+        generator.config(generator_config, statuses, mutex)
         threads.append(target=generator.run, args=(yaml))
 
     return threads
