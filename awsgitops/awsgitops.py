@@ -2,6 +2,7 @@ from .modules import *
 import sys
 import importlib
 import click
+import yaml
 from rich.console import Console
 from rich.table import Table
 from rich.live import Live
@@ -10,7 +11,7 @@ from copy import deepcopy
 from threading import Lock, Thread
 from time import sleep
 
-__version__ = "0.4.2"
+__version__ = "0.4.3"
 
 DEBUG = False
 console = Console()
@@ -91,12 +92,16 @@ def generate_status_view(status):
 @click.command()
 @click.argument('config', type=click.Path(exists=True))
 @click.argument('input', type=click.Path(exists=True))
-def main(config, input):
+@click.option('--output', default=None, help="Output file path")
+def main(config, input, output):
     """Regerate the INPUT yaml file with current data specified by CONFIG"""
     # Load yamls
     generator_config = file_ops.get_yaml(config)
     input_yaml = file_ops.get_yaml(input) 
     output_yaml = deepcopy(input_yaml)
+
+    console.print("\n[b u]Input yaml:")
+    console.print(yaml.dump(input_yaml, default_flow_style=False))
 
     #Load and configure generators
     gens, status = load_generators(generator_config)
@@ -107,13 +112,15 @@ def main(config, input):
         thread.start()
 
     #Wait for first generator to finish (testing)
-    print()
+    console.print()
     with Live(generate_status_view(status), refresh_per_second=4) as live:
         while any([thread.is_alive() for thread in threads]):
             sleep(0.25)
             live.update(generate_status_view(status))
         live.update(generate_status_view(status))
 
-    print()
-    print(input_yaml)
-    print(output_yaml)
+    console.print("[b u]Output yaml:")
+    console.print(yaml.dump(output_yaml, default_flow_style=False))
+
+    if output is not None:
+        file_ops.write_yaml(output_yaml, output)
