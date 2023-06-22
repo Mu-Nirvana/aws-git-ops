@@ -1,6 +1,6 @@
 from .modules import *
+from .generators import genlauncher
 import sys
-import importlib
 import click
 import yaml
 from rich.console import Console
@@ -8,14 +8,15 @@ from rich.table import Table
 from rich.live import Live
 from rich import box
 from copy import deepcopy
-from threading import Lock, Thread
 from time import sleep
 
-__version__ = "0.4.3"
-
+__version__ = "0.4.5"
 DEBUG = False
+
+# Application wide console object 
 console = Console()
 
+# Color config
 class COLORS():
  fail = "#B60324"
  success = "#0D7A95"
@@ -23,26 +24,8 @@ class COLORS():
  retrieve_wait = "#FAB372"
  gen = "#8E125E"
 
-# Load the generator classes and create a shared status object
-def load_generators(generator_config):
-    generators = {module_name: getattr(importlib.import_module(f"awsgitops.generators.{module_name}"), module_name) for module_name in generator_config.keys()}
 
-    status = {"Status": "Not Started", "isProvisioned": "", "isWired": "", "isValid": "", "getData": "", "generateData": "", "FAILED": False}
-    statuses = {generator: deepcopy(status) for generator in generators.keys()}
-
-    return generators, statuses
-
-# Configure the generator classes with status object, mutex, config, and yaml and return a list of threads ready to run
-def configure_generators(generators, statuses, generator_config, yaml):
-    mutex = Lock()
-    threads = []
-
-    for generator in generators.values():
-        generator.config(generator_config, statuses, mutex)
-        threads.append(Thread(target=generator.run, args=(yaml,)))
-
-    return threads
-
+# Style generator status messages
 def style(generator_status):
     output = []
 
@@ -75,6 +58,8 @@ def style(generator_status):
 
     return output
 
+
+# Generate a table view of statuses for the CLI
 def generate_status_view(status):
     table = Table(title="[b u]Generator Status", box=box.SIMPLE)
 
@@ -88,39 +73,65 @@ def generate_status_view(status):
     return table
 
 
-# Main function
-@click.command()
-@click.argument('config', type=click.Path(exists=True))
-@click.argument('input', type=click.Path(exists=True))
-@click.option('--output', default=None, help="Output file path")
-def main(config, input, output):
-    """Regerate the INPUT yaml file with current data specified by CONFIG"""
-    # Load yamls
+# Load a config and input file as yaml
+def load(config, input):
     generator_config = file_ops.get_yaml(config)
     input_yaml = file_ops.get_yaml(input) 
     output_yaml = deepcopy(input_yaml)
 
+    return generator_config, input_yaml, output_yaml
+
+
+# Configure and start the appropriate generators
+def start_generators(config_yaml, output_yaml):
+    gens, status = genlauncher.load_generators(config_yaml)
+    threads = genlauncher.configure_generators(gens, status, config_yaml, output_yaml)
+
+    for thread in threads:
+        thread.start()
+
+    return status, threads 
+
+
+# Check if any of the threads in the list are still alive
+threads_are_alive = lambda threads: any([thread.is_alive() for thread in threads])
+
+
+# Write yaml to an output file
+write_output = lambda output_yaml, output_file: file_ops.write_yaml(output_yaml, output_file)
+
+
+# CLI command (the above methods can be used to implement the same behavior within other applications to allow easy automation)
+@click.command()
+@click.argument('config', type=click.Path(exists=True))
+@click.argument('input', type=click.Path(exists=True))
+@click.option('--output', default=None, help="Output file path")
+@click.option('--yes', is_flag=True, help="Automatically choose yes for writing file output")
+def main(config, input, output, yes):
+    """Regerate the INPUT yaml file with current data specified by CONFIG"""
+    # Load yamls
+    generator_config, input_yaml, output_yaml = load(config, input)
+
+    # Display loaded input
     console.print("\n[b u]Input yaml:")
     console.print(yaml.dump(input_yaml, default_flow_style=False))
 
-    #Load and configure generators
-    gens, status = load_generators(generator_config)
-    threads = configure_generators(gens, status, generator_config, output_yaml)
-
-    # Start generators
-    for thread in threads:
-        thread.start()
+    # Start Generators
+    status, threads = start_generators(generator_config, output_yaml)
 
     #Wait for first generator to finish (testing)
     console.print()
     with Live(generate_status_view(status), refresh_per_second=4) as live:
-        while any([thread.is_alive() for thread in threads]):
+        while threads_are_alive(threads):
             sleep(0.25)
             live.update(generate_status_view(status))
         live.update(generate_status_view(status))
 
+    # Display generated yaml
     console.print("[b u]Output yaml:")
     console.print(yaml.dump(output_yaml, default_flow_style=False))
 
+    # If an output is provided confirm with user and write output
     if output is not None:
-        file_ops.write_yaml(output_yaml, output)
+        if console.input(f"Would you like to write the output to {output}? ([bright_green]y[/]/[bright_red]n[/])").lower() == "y" or yes:
+            write_output(output_yaml, output)

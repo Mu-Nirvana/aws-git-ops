@@ -4,6 +4,7 @@ from ..modules import util
 from time import sleep
 from awsgitops.awsgitops import DEBUG
 
+# Second example class
 class dummytwo(spec):
     new_data = None
     
@@ -44,10 +45,10 @@ class dummytwo(spec):
         cls.yaml_lock.acquire()
         cls.set_details("generateData", "Generating yaml")
         sleep(5)
-        if util.read(cls.config, "dummytwo", "TARGET") not in yaml:
+        if not util.is_present(yaml, *util.read(cls.config, "dummytwo", "TARGET")):
             return False
 
-        yaml = util.write(yaml, cls.new_data, util.read(cls.config, "dummytwo", "TARGET"))
+        yaml = util.write(yaml, cls.new_data, *util.read(cls.config, "dummytwo", "TARGET"))
         cls.set_details("generateData", "Successful")
         cls.yaml_lock.release()
 

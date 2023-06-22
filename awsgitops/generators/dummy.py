@@ -3,6 +3,7 @@ from .spec import spec
 from ..modules import util
 from time import sleep
 
+# Example class that doesn't access any AWS instances
 class dummy(spec):
     new_data = None
     
@@ -44,10 +45,10 @@ class dummy(spec):
         cls.yaml_lock.acquire()
         cls.set_details("generateData", "Generating yaml")
         sleep(2)
-        if util.read(cls.config, "dummy", "TARGET") not in yaml:
+        if not util.is_present(yaml, *util.read(cls.config, "dummy", "TARGET")):
             return False
 
-        yaml = util.write(yaml, cls.new_data, util.read(cls.config, "dummy", "TARGET"))
+        yaml = util.write(yaml, cls.new_data, *util.read(cls.config, "dummy", "TARGET"))
         cls.set_details("generateData", "Successful")
         cls.yaml_lock.release()
 
