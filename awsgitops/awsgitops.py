@@ -5,13 +5,14 @@ import click
 from rich.console import Console
 from rich.table import Table
 from rich.live import Live
+from rich import box
 from copy import deepcopy
 from threading import Lock, Thread
 from time import sleep
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 
-DEBUG = True
+DEBUG = False
 console = Console()
 
 # Load the generator classes and create a shared status object
@@ -19,7 +20,7 @@ def load_generators(generator_config):
     generators = {module_name: getattr(importlib.import_module(f"awsgitops.generators.{module_name}"), module_name) for module_name in generator_config.keys()}
 
     status = {"Status": "Not Started", "isProvisioned": "", "isWired": "", "isValid": "", "getData": "", "generateData": "", "FAILED": False}
-    statuses = {generator: status for generator in generators.keys()}
+    statuses = {generator: deepcopy(status) for generator in generators.keys()}
 
     return generators, statuses
 
@@ -67,7 +68,7 @@ def style(generator_status):
     return output
 
 def generate_status_view(status):
-    table = Table(title="Generator Status")
+    table = Table(title="[b u]Generator Status", box=box.SIMPLE)
 
     table.add_column("Generator")
     for key in list(status[list(status.keys())[0]].keys())[:-1]:
@@ -99,10 +100,12 @@ def main(config, input):
         thread.start()
 
     #Wait for first generator to finish (testing)
+    print()
     with Live(generate_status_view(status), refresh_per_second=4) as live:
         while any([thread.is_alive() for thread in threads]):
             sleep(0.25)
             live.update(generate_status_view(status))
+        live.update(generate_status_view(status))
 
     print()
     print(input_yaml)

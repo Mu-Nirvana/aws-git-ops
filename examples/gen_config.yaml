@@ -1,2 +1,4 @@
 dummy:
   TARGET: TEST 
+dummytwo:
+  TARGET: RANDOM
