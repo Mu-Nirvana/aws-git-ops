@@ -10,6 +10,15 @@ def read(yaml, *keys):
     else:
         return read(yaml[keys[0]], *keys[1:])
 
+def is_present(yaml, *keys):
+    if len(keys) == 1:
+        if keys[0] in yaml: return True
+        return False
+    else:
+        if keys[0] not in yaml: return False
+        return read(yaml[keys[0]], *keys[1:])
+
+
 # Write a value to a yaml object with a variable number of keys
 def write(yaml, value, *keys):
     if len(keys) == 1:
