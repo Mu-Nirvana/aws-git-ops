@@ -1,4 +1,9 @@
+CONFIG:
+  SOMETHING: here
 dummy:
-  TARGET: TEST 
+  TARGET: 
+  - TEST 
 dummytwo:
-  TARGET: RANDOM
+  TARGET:
+  - RANDOM
+  - SECOND

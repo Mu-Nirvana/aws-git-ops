@@ -1,4 +1,7 @@
-RANDOM: other data
+RANDOM:
+  FIRST: data1
+  SECOND: data2
+  THIRD: data3
 LIST:
 - 1
 - 2
