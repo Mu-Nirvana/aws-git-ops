@@ -1,16 +1,18 @@
 from .modules import *
 import sys
 import importlib
+import click
+from rich.console import Console
+from rich.table import Table
+from rich.live import Live
 from copy import deepcopy
 from threading import Lock, Thread
+from time import sleep
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
-# Check if the files exist
-def check_files(files):
-    for arg in files:
-        if not file_ops.check_file(arg):
-            util.error(f"Check path file {arg} does not exist!")
+DEBUG = True
+console = Console()
 
 # Load the generator classes and create a shared status object
 def load_generators(generator_config):
@@ -32,15 +34,60 @@ def configure_generators(generators, statuses, generator_config, yaml):
 
     return threads
 
-# Main function
-def main():
-    # Get and check command line arg files
-    file_args = sys.argv[1:]
-    check_files(file_args)
+def style(generator_status):
+    output = []
 
+    if generator_status["FAILED"]:
+        for status in list(generator_status.values())[:-1]:
+            output.append(f"[bright_red]{status}")
+        return output
+    elif generator_status["Status"] == "Finished":
+        for status in list(generator_status.values())[:-1]:
+            output.append(f"[bright_green]{status}")
+        return output
+
+    for status in list(generator_status.values())[:-1]:
+        if "Successful" in status:
+            output.append(f"[bright_green]{status}")
+        elif "Running" in status or "Started" in status:
+            output.append(f"[bright_yellow]{status}")
+        elif "Failed" in status or "FAILED" in status:
+            output.append(f"[bright_red]{status}")
+        elif "Checking" in status:
+            output.append(f"[dodger_blue2]{status}")
+        elif "Retrieving" in status:
+            output.append(f"[light_slate_blue]{status}")
+        elif "Generating" in status:
+            output.append(f"[bright_magenta]{status}")
+        elif "Waiting" in status:
+            output.append(f"[light_coral]{status}")
+        else:
+            output.append(f"[gray70]{status}")
+
+    return output
+
+def generate_status_view(status):
+    table = Table(title="Generator Status")
+
+    table.add_column("Generator")
+    for key in list(status[list(status.keys())[0]].keys())[:-1]:
+        table.add_column(key)
+
+    for generator in status:
+        table.add_row(f"[bright_white]{generator}", *style(status[generator]))
+
+    return table
+
+
+# Main function
+@click.command()
+@click.argument('config', type=click.Path(exists=True))
+@click.argument('input', type=click.Path(exists=True))
+def main(config, input):
+    """Regerate the INPUT yaml file with current data specified by CONFIG"""
     # Load yamls
-    generator_config = file_ops.get_yaml(file_args[0])
-    input_yaml = file_ops.get_yaml(file_args[1]) 
+    generator_config = file_ops.get_yaml(config)
+    input_yaml = file_ops.get_yaml(input) 
     output_yaml = deepcopy(input_yaml)
 
     #Load and configure generators
@@ -52,9 +99,11 @@ def main():
         thread.start()
 
     #Wait for first generator to finish (testing)
-    while threads[0].is_alive():
-        print('\033[2K', status, end='\r')
-    print(status)
+    with Live(generate_status_view(status), refresh_per_second=4) as live:
+        while any([thread.is_alive() for thread in threads]):
+            sleep(0.25)
+            live.update(generate_status_view(status))
 
+    print()
     print(input_yaml)
     print(output_yaml)

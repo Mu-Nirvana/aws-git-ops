@@ -40,15 +40,17 @@ class spec():
         stages = (("Running isProvisioned", cls.is_provisioned, []), ("Running isWired", cls.is_wired, []), ("Running isValid", cls.is_valid, []), ("Running getData", cls.get_data, []), ("Running generateYaml", cls.generate_yaml, [yaml])) 
 
         cls.set_status("Started")
+        for status in list(cls.status[cls.__name__])[1:-1]:
+            cls.set_details(status, "Waiting")
         
         for stage in stages:
             cls.set_status(stage[0])
             if not stage[1](*stage[2]):
-                cls.status["FAILED"] = True
+                cls.set_details("FAILED", True)
                 cls.set_status(f"FAILED")
                 return 1
 
-        cls.set_status("FINISHED")
+        cls.set_status("Finished")
     
     # Set the generators status
     @classmethod
