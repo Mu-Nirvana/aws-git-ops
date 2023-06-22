@@ -33,7 +33,7 @@ class dummy(spec):
 
     @classmethod
     def get_data(cls):
-        cls.set_details("getData", "Retriving data")
+        cls.set_details("getData", "Retrieving data")
         sleep(2)
         cls.new_data = input('\033[2K' + "Input some dummy data to change:\n")
         cls.set_details("getData", "Successful")
@@ -43,6 +43,7 @@ class dummy(spec):
     def generate_yaml(cls, yaml):
         cls.yaml_lock.acquire()
         cls.set_details("generateData", "Generating yaml")
+        sleep(2)
         if util.read(cls.config, "dummy", "TARGET") not in yaml:
             return False
 
