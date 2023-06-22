@@ -10,10 +10,17 @@ from copy import deepcopy
 from threading import Lock, Thread
 from time import sleep
 
-__version__ = "0.4.1"
+__version__ = "0.4.2"
 
 DEBUG = False
 console = Console()
+
+class COLORS():
+ fail = "#B60324"
+ success = "#0D7A95"
+ run_check = "#C94E02"
+ retrieve_wait = "#FAB372"
+ gen = "#8E125E"
 
 # Load the generator classes and create a shared status object
 def load_generators(generator_config):
@@ -40,28 +47,28 @@ def style(generator_status):
 
     if generator_status["FAILED"]:
         for status in list(generator_status.values())[:-1]:
-            output.append(f"[bright_red]{status}")
+            output.append(f"[{COLORS.fail}]{status}")
         return output
     elif generator_status["Status"] == "Finished":
         for status in list(generator_status.values())[:-1]:
-            output.append(f"[bright_green]{status}")
+            output.append(f"[{COLORS.success}]{status}")
         return output
 
     for status in list(generator_status.values())[:-1]:
         if "Successful" in status:
-            output.append(f"[bright_green]{status}")
+            output.append(f"[{COLORS.success}]{status}")
         elif "Running" in status or "Started" in status:
-            output.append(f"[bright_yellow]{status}")
+            output.append(f"[{COLORS.run_check}]{status}")
         elif "Failed" in status or "FAILED" in status:
-            output.append(f"[bright_red]{status}")
+            output.append(f"[{COLORS.fail}]{status}")
         elif "Checking" in status:
-            output.append(f"[dodger_blue2]{status}")
+            output.append(f"[{COLORS.run_check}]{status}")
         elif "Retrieving" in status:
-            output.append(f"[light_slate_blue]{status}")
+            output.append(f"[{COLORS.retrieve_wait}]{status}")
         elif "Generating" in status:
-            output.append(f"[bright_magenta]{status}")
+            output.append(f"[{COLORS.gen}]{status}")
         elif "Waiting" in status:
-            output.append(f"[light_coral]{status}")
+            output.append(f"[{COLORS.retrieve_wait}]{status}")
         else:
             output.append(f"[gray70]{status}")
 
