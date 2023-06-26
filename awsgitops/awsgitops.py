@@ -39,7 +39,7 @@ def style(generator_status):
             output.append(f"[{COLORS.success}]{status}")
         return output
 
-    for stage in [Status.GET_INST, Status.OPERATIONAL, Status.GET_DATA, Status.GENERATE]:
+    for stage in [Status.STATUS, Status.GET_INST, Status.OPERATIONAL, Status.GET_DATA, Status.GENERATE]:
         status = generator_status[stage]
         if "Successful" in status:
             output.append(f"[{COLORS.success}]{status}")
@@ -78,19 +78,19 @@ def generate_status_view(status):
     return table
 
 
-# Load a config and input file as yaml
-def load(config, input):
+# Load a config and input files as yaml
+def load(config, inputs):
     generator_config = file_ops.get_yaml(config)
-    input_yaml = file_ops.get_yaml(input) 
-    output_yaml = deepcopy(input_yaml)
+    input_yamls = [file_ops.get_yaml(input) for input in inputs]
+    output_yamls = deepcopy(input_yamls)
 
-    return generator_config, input_yaml, output_yaml
+    return generator_config, input_yamls, output_yamls
 
 
 # Configure and start the appropriate generators
-def start_generators(config_yaml, output_yaml):
+def start_generators(config_yaml, output_yamls):
     gens, status = genlauncher.load_generators(config_yaml)
-    threads = genlauncher.configure_generators(gens, status, config_yaml, output_yaml)
+    threads = genlauncher.configure_generators(gens, status, config_yaml, output_yamls)
 
     for thread in threads:
         thread.start()
@@ -115,14 +115,14 @@ write_output = lambda output_yaml, output_file: file_ops.write_yaml(output_yaml,
 def main(config, input, output, yes):
     """Regerate the INPUT yaml file with current data specified by CONFIG"""
     # Load yamls
-    generator_config, input_yaml, output_yaml = load(config, input)
+    generator_config, input_yamls, output_yamls = load(config, [input])
 
     # Display loaded input
     console.print("\n[b u]Input yaml:")
-    console.print(yaml.dump(input_yaml, default_flow_style=False))
+    console.print(yaml.dump(input_yamls[0], default_flow_style=False))
 
     # Start Generators
-    status, threads = start_generators(generator_config, output_yaml)
+    status, threads = start_generators(generator_config, output_yamls)
 
     #Wait for first generator to finish (testing)
     console.print()
@@ -134,9 +134,9 @@ def main(config, input, output, yes):
 
     # Display generated yaml
     console.print("[b u]Output yaml:")
-    console.print(yaml.dump(output_yaml, default_flow_style=False))
+    console.print(yaml.dump(output_yamls[0], default_flow_style=False))
 
     # If an output is provided confirm with user and write output
     if output is not None:
         if console.input(f"Would you like to write the output to {output}? ([bright_green]y[/]/[bright_red]n[/])").lower() == "y" or yes:
-            write_output(output_yaml, output)
+            write_output(output_yamls[0], output)
