@@ -9,6 +9,7 @@ from rich.live import Live
 from rich import box
 from copy import deepcopy
 from time import sleep
+from .generators.genlauncher import Status
 
 __version__ = "0.4.5"
 DEBUG = False
@@ -29,16 +30,17 @@ class COLORS():
 def style(generator_status):
     output = []
 
-    if generator_status["FAILED"]:
+    if generator_status[Status.FAILED]:
         for status in list(generator_status.values())[:-1]:
             output.append(f"[{COLORS.fail}]{status}")
         return output
-    elif generator_status["Status"] == "Finished":
+    elif generator_status[Status.STATUS] == "Finished":
         for status in list(generator_status.values())[:-1]:
             output.append(f"[{COLORS.success}]{status}")
         return output
 
-    for status in list(generator_status.values())[:-1]:
+    for stage in [Status.GET_INST, Status.OPERATIONAL, Status.GET_DATA, Status.GENERATE]:
+        status = generator_status[stage]
         if "Successful" in status:
             output.append(f"[{COLORS.success}]{status}")
         elif "Running" in status or "Started" in status:
@@ -63,9 +65,12 @@ def style(generator_status):
 def generate_status_view(status):
     table = Table(title="[b u]Generator Status", box=box.SIMPLE)
 
-    table.add_column("Generator")
-    for key in list(status[list(status.keys())[0]].keys())[:-1]:
-        table.add_column(key)
+    table.add_column("generator")
+    table.add_column("status")
+    table.add_column("getInstance")
+    table.add_column("isOperational")
+    table.add_column("getData")
+    table.add_column("generate")
 
     for generator in status:
         table.add_row(f"[bright_white]{generator}", *style(status[generator]))

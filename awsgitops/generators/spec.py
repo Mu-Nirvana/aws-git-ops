@@ -1,5 +1,6 @@
 import sys
 from ..modules import util
+from .genlauncher import Status
 
 class spec():
     status = None
@@ -8,17 +9,12 @@ class spec():
 
     # Abstract
     @classmethod
-    def is_provisioned(cls):
+    def get_instance(cls):
         return True
-
+ 
     # Abstract
     @classmethod
-    def is_wired(cls):
-        return True
-    
-    # Abstract
-    @classmethod
-    def is_valid(cls):
+    def is_operational(cls):
         return True
 
     # Abstract
@@ -37,32 +33,28 @@ class spec():
         if cls.status == None or cls.config == None or cls.yaml_lock == None:
             util.error(f"Generator {__class__.__name__} has not been fully configured")    
 
-        stages = (("Running isProvisioned", cls.is_provisioned, []), ("Running isWired", cls.is_wired, []), ("Running isValid", cls.is_valid, []), ("Running getData", cls.get_data, []), ("Running generateYaml", cls.generate_yaml, [yaml])) 
+        stages = (("Running getInstance", cls.get_instance, []), ("Running isOperational", cls.is_operational, []), ("Running getData", cls.get_data, []), ("Running generateYaml", cls.generate_yaml, [yaml])) 
 
-        cls.set_status("Started")
-        for status in list(cls.status[cls.__name__])[1:-1]:
-            cls.set_details(status, "Waiting")
+        cls.set_status(Status.STATUS, "Started")
+        for status in [Status.GET_INST, Status.OPERATIONAL, Status.GET_DATA, Status.GENERATE]:
+            cls.set_status(status, "Waiting")
         
         for stage in stages:
-            cls.set_status(stage[0])
+            cls.set_status(Status.STATUS, stage[0])
             if not stage[1](*stage[2]):
-                cls.set_details("FAILED", True)
-                cls.set_status(f"FAILED")
+                cls.set_status(Status.FAILED, True)
+                cls.set_status(Status.STATUS, "FAILED")
                 return 1
 
-        cls.set_status("Finished")
+        cls.set_status(Status.STATUS, "Finished")
     
     # Set the generators status
     @classmethod
-    def set_status(cls, status_msg):
-        cls.status[cls.__name__]["Status"] = status_msg
+    def set_status(cls, status, status_msg):
+        cls.status[cls.__name__][status] = status_msg
 
     @classmethod
     def config(cls, generator_config, status_object, mutex):
         cls.config = generator_config
         cls.status = status_object
         cls.yaml_lock = mutex
-
-    @classmethod
-    def set_details(cls, stage, message):
-        cls.status[cls.__name__][stage] = message
