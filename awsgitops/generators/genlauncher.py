@@ -21,14 +21,14 @@ def load_generators(generator_config):
 
     return generators, statuses
 
-# Configure the generator classes with status object, mutex, config, and yaml and return a list of threads ready to run
-def configure_generators(generators, statuses, generator_config, yaml):
+# Configure the generator classes with status object, mutex, config, and yaml list and return a list of threads ready to run
+def configure_generators(generators, statuses, generator_config, yamls):
     mutex = Lock()
     threads = []
-
+    
     for generator in generators.values():
         generator.config(generator_config, statuses, mutex)
-        threads.append(Thread(target=generator.run, args=(yaml,)))
+        threads.append(Thread(target=generator.run, args=(yamls,)))
 
     return threads
 

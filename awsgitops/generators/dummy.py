@@ -47,3 +47,8 @@ class dummy(spec):
         cls.yaml_lock.release()
 
         return True
+
+    @classmethod
+    def reset(cls):
+        super().reset()
+        new_data = None
