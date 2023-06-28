@@ -2,7 +2,7 @@ import sys
 from .spec import spec
 from ..modules import util
 from time import sleep
-from .genlauncher import Status
+from .genlauncher import Status, LogType
 
 # Example class that doesn't access any AWS instances
 class dummy(spec):
@@ -19,8 +19,9 @@ class dummy(spec):
     def is_operational(cls):
         cls.set_status(Status.OPERATIONAL, "Checking") 
         sleep(2)
-        if input('\033[2K' + "Fail this step? (y/n)\n").lower() == "y":
+        if input("Fail this step? (y/n) ").lower() == "y":
             cls.set_status(Status.OPERATIONAL, "Failed")
+            cls.log_put(LogType.ERROR, "Aborted")
             return False
         else:
             cls.set_status(Status.OPERATIONAL, "Successful")
