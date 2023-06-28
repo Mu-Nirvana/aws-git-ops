@@ -1,9 +1,10 @@
 import sys
 from ..modules import util
-from .genlauncher import Status
+from .genlauncher import Status, LogType
 
 class spec():
     status = None
+    log = None
     confg = None
     yaml_lock = None
 
@@ -32,7 +33,7 @@ class spec():
     def run(cls, yamls):
         for yaml in yamls:
             cls.reset()
-            if cls.status == None or cls.config == None or cls.yaml_lock == None:
+            if cls.status == None or cls.config == None or cls.yaml_lock == None or cls.log == None:
                 util.error(f"Generator {__class__.__name__} has not been fully configured")    
 
             stages = (("Running getInstance", cls.get_instance, []), ("Running isOperational", cls.is_operational, []), ("Running getData", cls.get_data, []), ("Running generateYaml", cls.generate_yaml, [yaml])) 
@@ -54,8 +55,9 @@ class spec():
 
     # Configure the generator class
     @classmethod
-    def config(cls, generator_config, status_object, mutex):
+    def config(cls, generator_config, log, status_object, mutex):
         cls.config = generator_config
+        cls.log = log
         cls.status = status_object
         cls.yaml_lock = mutex
 
@@ -65,4 +67,9 @@ class spec():
         cls.set_status(Status.STATUS, "Started")
         for status in [Status.GET_INST, Status.OPERATIONAL, Status.GET_DATA, Status.GENERATE]:
              cls.set_status(status, "Waiting")
+
+    # Log messages
+    @classmethod
+    def log_put(cls, type, message):
+        cls.log.append((type, f"{cls.__name__}|{message}"))
 

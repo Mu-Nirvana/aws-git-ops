@@ -9,7 +9,7 @@ from rich.live import Live
 from rich import box
 from copy import deepcopy
 from time import sleep
-from .generators.genlauncher import Status
+from .generators.genlauncher import Status, LogType
 
 __version__ = "0.4.5"
 DEBUG = False
@@ -24,6 +24,8 @@ class COLORS():
  run_check = "#C94E02"
  retrieve_wait = "#FAB372"
  gen = "#8E125E"
+ normal = "#FFFFFF"
+ warn = "#F58002"
 
 
 # Style generator status messages
@@ -60,6 +62,16 @@ def style(generator_status):
 
     return output
 
+def format_log(message):
+    if message[0] == LogType.ERROR:
+        return f"[{COLORS.fail}]ERROR: {message[1]}"
+    elif message[0] == LogType.WARNING:
+        return f"[{COLORS.warn}]WARNING: {message[1]}"
+    elif message[0] == LogType.MESSAGE:
+        return f"[{COLORS.normal}]{message[1]}"
+    else:
+        return f"[gray70]{message[1]}"
+
 
 # Generate a table view of statuses for the CLI
 def generate_status_view(status):
@@ -89,13 +101,13 @@ def load(config, inputs):
 
 # Configure and start the appropriate generators
 def start_generators(config_yaml, output_yamls):
-    gens, status = genlauncher.load_generators(config_yaml)
-    threads = genlauncher.configure_generators(gens, status, config_yaml, output_yamls)
+    gens, status, log = genlauncher.load_generators(config_yaml)
+    threads = genlauncher.configure_generators(gens, status, log, config_yaml, output_yamls)
 
     for thread in threads:
         thread.start()
 
-    return status, threads 
+    return status, log, threads 
 
 
 # Check if any of the threads in the list are still alive
@@ -122,13 +134,15 @@ def main(config, input, output, yes):
     console.print(yaml.dump(input_yamls[0], default_flow_style=False))
 
     # Start Generators
-    status, threads = start_generators(generator_config, output_yamls)
+    status, log, threads = start_generators(generator_config, output_yamls)
 
     #Wait for first generator to finish (testing)
     console.print()
-    with Live(generate_status_view(status), refresh_per_second=4) as live:
+    with Live(generate_status_view(status), refresh_per_second=4, console=console) as live:
         while threads_are_alive(threads):
             sleep(0.25)
+            while len(log) > 0:
+                console.print(format_log(log.pop(0)))
             live.update(generate_status_view(status))
         live.update(generate_status_view(status))
 
