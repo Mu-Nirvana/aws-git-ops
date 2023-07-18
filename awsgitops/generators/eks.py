@@ -4,7 +4,7 @@ from .genlauncher import Status, LogType
 import boto3
 import re
 
-class spec():
+class eks():
     eks_client = None
     cluster = None
     data = None
@@ -14,7 +14,7 @@ class spec():
     def get_instance(cls):
         cls.set_status(Status.GET_INST, "Retrieving cluster")
         cls.eks_client = boto3.client('eks')
-        clusters = eks_client.list_clusters()["clusters"]
+        clusters = cls.eks_client.list_clusters()["clusters"]
         re_pattern = util.read(cls.config, "eks", "Name")
         
         matches = [cluster for cluster in clusters if re.match(re_pattern, cluster)]
