@@ -5,24 +5,25 @@ from .genlauncher import Status, LogType
 import boto3
 import re
 
+# Generator class for eks data
 class eks(spec):
     eks_client = None
     cluster = None
     data = None
 
-    # Abstract
+    # Get the eks cluster
     @classmethod
     def get_instance(cls):
         cls.set_status(Status.GET_INST, "Retrieving cluster")
 
-        # Jokes
-        # cls.eks_client = boto3.client('eks')
-        # clusters = cls.eks_client.list_clusters()["clusters"]
+        # Get clusters
+        cls.eks_client = boto3.client('eks')
+        clusters = cls.eks_client.list_clusters()["clusters"]
 
-        clusters = ['devel', 'prod', 'eks_cluster_v2']
-
+        # Get name regex pattern
         re_pattern = util.read(cls.config, "eks", "name")
         
+        # Locate name matches
         matches = [cluster for cluster in clusters if re.match(re_pattern, cluster)]
         if len(matches) != 1:
             if len(matches) == 0:
@@ -32,19 +33,19 @@ class eks(spec):
             cls.set_status(Status.GET_INST, f"Failed to match a cluster")
             return False
 
+        # Save cluster name
         cls.cluster = matches[0]
 
         cls.set_status(Status.GET_INST, "Cluster successfully retrieved")
         return True
         
-    # Abstract
+    # Check if cluster is operational
     @classmethod
     def is_operational(cls):
         cls.set_status(Status.OPERATIONAL, "Checking")
 
-        # Jokes
-        #status = cls.eks_client.describe_cluster(name=cls.cluster)["cluster"]["status"]
-        status = "ACTIVE"
+        # Get status
+        status = cls.eks_client.describe_cluster(name=cls.cluster)["cluster"]["status"]
 
         if status != "ACTIVE":
             cls.log_put(LogType.ERROR, f"Cluster name: {cls.cluster} has status {status}")
@@ -54,114 +55,28 @@ class eks(spec):
         cls.set_status(Status.OPERATIONAL, "Valid cluster")
         return True
 
-    # Abstract
+    # Get the entire describe_cluster output
     @classmethod
     def get_data(cls):
         cls.set_status(Status.GET_DATA, "Retrieving data")
 
-        # Jokes
-        #cls.data = cls.eks_client.describe_cluster(name=cls.cluster)
-        cls.data = \
-{
-    'cluster': {
-        'name': 'eks_cluster_v1',
-        'arn': 'string',
-        'version': 'string',
-        'endpoint': 'somewhere over yonder',
-        'roleArn': 'string',
-        'resourcesVpcConfig': {
-            'subnetIds': [
-                'string',
-            ],
-            'securityGroupIds': [
-                'string',
-            ],
-            'clusterSecurityGroupId': 'string',
-            'vpcId': 'string',
-            'publicAccessCidrs': [
-                'string',
-            ]
-        },
-        'kubernetesNetworkConfig': {
-            'serviceIpv4Cidr': 'string',
-            'serviceIpv6Cidr': 'string',
-            'ipFamily': 'ipv6'
-        },
-        'logging': {
-            'clusterLogging': [
-                {
-                    'types': [
-                        'api',
-                    ],
-                    'enabled': True
-                },
-            ]
-        },
-        'identity': {
-            'oidc': {
-                'issuer': 'string'
-            }
-        },
-        'status': 'ACTIVE',
-        'certificateAuthority': {
-            'data': 'string'
-        },
-        'clientRequestToken': 'string',
-        'platformVersion': 'string',
-        'tags': {
-            'string': 'string'
-        },
-        'encryptionConfig': [
-            {
-                'resources': [
-                    'string',
-                ],
-                'provider': {
-                    'keyArn': 'string'
-                }
-            },
-        ],
-        'connectorConfig': {
-            'activationId': 'string',
-            'activationCode': 'string',
-            'provider': 'string',
-            'roleArn': 'string'
-        },
-        'id': 'string',
-        'health': {
-            'issues': [
-                {
-                    'code': 'AccessDenied',
-                    'message': 'string',
-                    'resourceIds': [
-                        'string',
-                    ]
-                },
-            ]
-        },
-        'outpostConfig': {
-            'outpostArns': [
-                'string',
-            ],
-            'controlPlaneInstanceType': 'string',
-            'controlPlanePlacement': {
-                'groupName': 'string'
-            }
-        }
-    }
-}
-        cls.set_status(Status.GET_DATA, "Successful")
+        # Get data
+        cls.data = cls.eks_client.describe_cluster(name=cls.cluster)
 
+        cls.set_status(Status.GET_DATA, "Successful")
         return True
 
-    # Abstract
+    # Generate yaml
     @classmethod
     def generate_yaml(cls, yaml):
         cls.yaml_lock.acquire()
         cls.set_status(Status.GENERATE, "Generating yaml")
+
+        # Get all data targets
         targets = util.read(cls.config, "eks", "targets")
 
         for target in targets:
+            # Create a list of potential paths to the data
             paths = []
             if 'targetPath' in target:
                 paths += target['targetPath']
@@ -174,6 +89,7 @@ class eks(spec):
                 cls.log_put(LogType.ERROR, f"No targets provided in generator config")
                 return False
 
+            # Check which paths are valid
             valid_paths = [path for path in paths if util.is_present(yaml, *path)]
 
             if len(valid_paths) == 0:
@@ -188,6 +104,7 @@ class eks(spec):
             if len(valid_paths) > 1:
                 cls.log_put(LogType.WARNING, f"Multiple targets found: {valid_paths}")
 
+            # Read target data and write it to the valid yaml paths
             src_data = util.read(cls.data, "cluster", *target["src"])
             for path in valid_paths:
                 yaml = util.write(yaml, src_data, *path)
