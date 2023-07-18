@@ -1,15 +1,15 @@
 rds:
-  name: database_v*
+  name: dev-db01v.-appx-.*
   targets:
   - src: ["DatabaseName"]
     targetPath:
-    - ["infrastructure", "RDS_DB_NAME"]
+    - [RDS_DB_NAME]
 eks:
-  name: eks_cluster_v*
+  name: eks-stackv.-87ah34
   targets:
   - src: ["name"]
     targetPath: 
-    - ["infrastructure", "EKS_CLUSTER_NAME"]
+    - ["infraConfig", "EKS_CLUSTER"]
   - src: ["endpoint"]
     targetName:
-    - eks_endpoint
+    - ENDPOINT 

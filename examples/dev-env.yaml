@@ -2,4 +2,4 @@ RDS_DB_NAME: dev-db01v1-appx-iudi3432
 REGION: us-west-2
 infraConfig:
   EKS_CLUSTER: eks-stackv1-87ah34
-  REDIS_ENDPOINT: app-dev-wa3v1-redis.897hm.usw2.cache.amazon.com
+  ENDPOINT: app-dev-wa3v0-redis.897hm.use2.cache.amazon.com
