@@ -101,13 +101,13 @@ def load(config, inputs):
 
 # Configure and start the appropriate generators
 def start_generators(config_yaml, output_yamls):
-    gens, status, log = genlauncher.load_generators(config_yaml)
+    gens, status, log, config = genlauncher.load_generators(config_yaml)
     threads = genlauncher.configure_generators(gens, status, log, config_yaml, output_yamls)
 
     for thread in threads:
         thread.start()
 
-    return status, log, threads 
+    return status, log, threads, config
 
 
 # Check if any of the threads in the list are still alive
@@ -134,16 +134,17 @@ def main(config, input, output, yes):
     console.print(yaml.dump(input_yamls[0], default_flow_style=False))
 
     # Start Generators
-    status, log, threads = start_generators(generator_config, output_yamls)
+    status, log, threads, program_config = start_generators(generator_config, output_yamls)
 
     #Wait for first generator to finish (testing)
     console.print()
-    with Live(generate_status_view(status), refresh_per_second=4, console=console) as live:
+    with Live(generate_status_view(status), refresh_per_second=4) as live:
         while threads_are_alive(threads):
-            sleep(0.25)
             while len(log) > 0:
-                console.print(format_log(log.pop(0)))
+                live.console.print(format_log(log.pop(0)))
             live.update(generate_status_view(status))
+        while len(log) > 0:
+            live.console.print(format_log(log.pop(0)))
         live.update(generate_status_view(status))
 
     # Display generated yaml
