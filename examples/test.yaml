@@ -10,3 +10,10 @@ TEST: data
 MAP:
   VALUE: 1
   OTHER: 2
+
+endpoints:
+  eks_endpoint: not quite
+
+infrastructure:
+  RDS_DB_NAME: wild
+  EKS_CLUSTER_NAME: insane

@@ -1,10 +1,11 @@
 import sys
 from ..modules import util
+from .spec import spec
 from .genlauncher import Status, LogType
 import boto3
 import re
 
-class eks():
+class eks(spec):
     eks_client = None
     cluster = None
     data = None
@@ -13,9 +14,14 @@ class eks():
     @classmethod
     def get_instance(cls):
         cls.set_status(Status.GET_INST, "Retrieving cluster")
-        cls.eks_client = boto3.client('eks')
-        clusters = cls.eks_client.list_clusters()["clusters"]
-        re_pattern = util.read(cls.config, "eks", "Name")
+
+        # Jokes
+        # cls.eks_client = boto3.client('eks')
+        # clusters = cls.eks_client.list_clusters()["clusters"]
+
+        clusters = ['devel', 'prod', 'eks_cluster_v2']
+
+        re_pattern = util.read(cls.config, "eks", "name")
         
         matches = [cluster for cluster in clusters if re.match(re_pattern, cluster)]
         if len(matches) != 1:
@@ -28,14 +34,18 @@ class eks():
 
         cls.cluster = matches[0]
 
-        cls.set_status(Status.GET_INST, "Cluster sucessfully retrieved")
+        cls.set_status(Status.GET_INST, "Cluster successfully retrieved")
         return True
         
     # Abstract
     @classmethod
     def is_operational(cls):
         cls.set_status(Status.OPERATIONAL, "Checking")
-        status = cls.eks_client.describe_cluster(name=cls.cluster)["cluster"]["status"]
+
+        # Jokes
+        #status = cls.eks_client.describe_cluster(name=cls.cluster)["cluster"]["status"]
+        status = "ACTIVE"
+
         if status != "ACTIVE":
             cls.log_put(LogType.ERROR, f"Cluster name: {cls.cluster} has status {status}")
             cls.set_status(Status.OPERATIONAL, "Failed: Invalid cluster")
@@ -48,7 +58,98 @@ class eks():
     @classmethod
     def get_data(cls):
         cls.set_status(Status.GET_DATA, "Retrieving data")
-        cls.data = cls.eks_client.describe_cluster(name=cls.cluster)
+
+        # Jokes
+        #cls.data = cls.eks_client.describe_cluster(name=cls.cluster)
+        cls.data = \
+{
+    'cluster': {
+        'name': 'eks_cluster_v1',
+        'arn': 'string',
+        'version': 'string',
+        'endpoint': 'somewhere over yonder',
+        'roleArn': 'string',
+        'resourcesVpcConfig': {
+            'subnetIds': [
+                'string',
+            ],
+            'securityGroupIds': [
+                'string',
+            ],
+            'clusterSecurityGroupId': 'string',
+            'vpcId': 'string',
+            'publicAccessCidrs': [
+                'string',
+            ]
+        },
+        'kubernetesNetworkConfig': {
+            'serviceIpv4Cidr': 'string',
+            'serviceIpv6Cidr': 'string',
+            'ipFamily': 'ipv6'
+        },
+        'logging': {
+            'clusterLogging': [
+                {
+                    'types': [
+                        'api',
+                    ],
+                    'enabled': True
+                },
+            ]
+        },
+        'identity': {
+            'oidc': {
+                'issuer': 'string'
+            }
+        },
+        'status': 'ACTIVE',
+        'certificateAuthority': {
+            'data': 'string'
+        },
+        'clientRequestToken': 'string',
+        'platformVersion': 'string',
+        'tags': {
+            'string': 'string'
+        },
+        'encryptionConfig': [
+            {
+                'resources': [
+                    'string',
+                ],
+                'provider': {
+                    'keyArn': 'string'
+                }
+            },
+        ],
+        'connectorConfig': {
+            'activationId': 'string',
+            'activationCode': 'string',
+            'provider': 'string',
+            'roleArn': 'string'
+        },
+        'id': 'string',
+        'health': {
+            'issues': [
+                {
+                    'code': 'AccessDenied',
+                    'message': 'string',
+                    'resourceIds': [
+                        'string',
+                    ]
+                },
+            ]
+        },
+        'outpostConfig': {
+            'outpostArns': [
+                'string',
+            ],
+            'controlPlaneInstanceType': 'string',
+            'controlPlanePlacement': {
+                'groupName': 'string'
+            }
+        }
+    }
+}
         cls.set_status(Status.GET_DATA, "Successful")
 
         return True
@@ -61,13 +162,35 @@ class eks():
         targets = util.read(cls.config, "eks", "targets")
 
         for target in targets:
-            if not util.is_present(yaml, *target["targetPath"]):
+            paths = []
+            if 'targetPath' in target:
+                paths += target['targetPath']
+            if 'targetName' in target:
+                for name in target['targetName']:
+                    paths += util.find(yaml, name)
+
+            if 'targetPath' not in target and 'targetName' not in target:
                 cls.set_status(Status.GENERATE, "Failed to locate target")
-                cls.log_put(LogType.ERROR, "Target {*target['targetPath']} not found in input yaml")
+                cls.log_put(LogType.ERROR, f"No targets provided in generator config")
                 return False
 
+            valid_paths = [path for path in paths if util.is_present(yaml, *path)]
+
+            if len(valid_paths) == 0:
+                cls.set_status(Status.GENERATE, "Failed to locate target")
+                if len(paths) == 0:
+                    cls.log_put(LogType.ERROR, f"No targets with names {target['targetName']} found in input yaml")
+                else:
+                    cls.log_put(LogType.ERROR, f"Targets {paths} not found in input yaml")
+
+                return False
+
+            if len(valid_paths) > 1:
+                cls.log_put(LogType.WARNING, f"Multiple targets found: {valid_paths}")
+
             src_data = util.read(cls.data, "cluster", *target["src"])
-            yaml = util.write(yaml, src_data, *target["targetPath"])
+            for path in valid_paths:
+                yaml = util.write(yaml, src_data, *path)
 
         cls.set_status(Status.GENERATE, "Successful")
         cls.yaml_lock.release()
