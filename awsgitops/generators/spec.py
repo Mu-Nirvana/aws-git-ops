@@ -5,7 +5,7 @@ from .genlauncher import Status, LogType
 class spec():
     status = None
     log = None
-    confg = None
+    config = None
     yaml_lock = None
 
     # Abstract

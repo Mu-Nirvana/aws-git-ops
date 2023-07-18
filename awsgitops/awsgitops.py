@@ -43,19 +43,19 @@ def style(generator_status):
 
     for stage in [Status.STATUS, Status.GET_INST, Status.OPERATIONAL, Status.GET_DATA, Status.GENERATE]:
         status = generator_status[stage]
-        if "Successful" in status:
+        if "successful" in status.lower() or "valid" in status.lower():
             output.append(f"[{COLORS.success}]{status}")
-        elif "Running" in status or "Started" in status:
+        elif "running" in status.lower() or "started" in status.lower():
             output.append(f"[{COLORS.run_check}]{status}")
-        elif "Failed" in status or "FAILED" in status:
+        elif "failed" in status.lower():
             output.append(f"[{COLORS.fail}]{status}")
-        elif "Checking" in status:
+        elif "checking" in status.lower():
             output.append(f"[{COLORS.run_check}]{status}")
-        elif "Retrieving" in status:
+        elif "retrieving" in status.lower():
             output.append(f"[{COLORS.retrieve_wait}]{status}")
-        elif "Generating" in status:
+        elif "generating" in status.lower():
             output.append(f"[{COLORS.gen}]{status}")
-        elif "Waiting" in status:
+        elif "waiting" in status.lower():
             output.append(f"[{COLORS.retrieve_wait}]{status}")
         else:
             output.append(f"[gray70]{status}")
