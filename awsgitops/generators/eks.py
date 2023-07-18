@@ -58,13 +58,17 @@ class eks():
     def generate_yaml(cls, yaml):
         cls.yaml_lock.acquire()
         cls.set_status(Status.GENERATE, "Generating yaml")
-        target = util.read(cls.config, "eks", "Target")
-        if not util.is_present(yaml, *target):
-            cls.set_status(Status.GENERATE, "Failed to locate target")
-            cls.log_put(LogType.ERROR, "Target {*target} not found in input yaml")
-            return False
+        targets = util.read(cls.config, "eks", "targets")
 
-        yaml = util.write(yaml, cls.cluster, *target)
+        for target in targets:
+            if not util.is_present(yaml, *target["targetPath"]):
+                cls.set_status(Status.GENERATE, "Failed to locate target")
+                cls.log_put(LogType.ERROR, "Target {*target['targetPath']} not found in input yaml")
+                return False
+
+            src_data = util.read(cls.data, "cluster", *target["src"])
+            yaml = util.write(yaml, src_data, *target["targetPath"])
+
         cls.set_status(Status.GENERATE, "Successful")
         cls.yaml_lock.release()
 
