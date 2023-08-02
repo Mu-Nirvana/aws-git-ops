@@ -4,3 +4,8 @@
 
 #Python
 __pycache__/
+
+#Setup Tools
+build/
+aws_gitops.egg-info/
+dist/

@@ -23,6 +23,11 @@ setup(
         "console_scripts": ['awsgitops = awsgitops.awsgitops:main']
         },
     version = version,
+    install_requires=[
+        'rich',
+        'click',
+        'yaml',
+    ],
     description = "Automatically regenerate gitops application yaml configuration files with new infrastructure data.",
     long_description = long_descr,
     author = "Ben Campbell",
