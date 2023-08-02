@@ -11,7 +11,7 @@ from copy import deepcopy
 from time import sleep
 from .generators.genlauncher import Status, LogType
 
-__version__ = "0.4.5"
+__version__ = "1.0.1"
 DEBUG = False
 
 # Application wide console object 
