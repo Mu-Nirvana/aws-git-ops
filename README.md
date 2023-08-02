@@ -31,11 +31,11 @@ You can configure BOTO3 credentials a variety of ways following the instructions
 The generators are configured with a yaml file with this general structure:
 ```yaml
 generatorName:
-	name: some_name_regex*
-	targets:
-	- src: [name]
-	  targetName:
-	  - CONFIG_NAME
+  name: some_name_regex*
+  targets:
+  - src: [name]
+    targetName:
+    - CONFIG_NAME
 ```
 Each generator in use has a dictionary with the same name (available generators and associated name are listed in [generators](#generators)). The dictionary contains the name or identifier for the source resource, and a list of target values. Each element is a dictionary with a source and target. The source is a list of keys and indices that indicate the location of the source value in the BOTO3 response (see the [generators](#generators) section for specifics). The target can either be `targetName` or `targetPath`. `targetName` takes a list of strings that represent the target key to replace the value of. `targetPath` takes a list of list of strings that represent full paths to the value to be changed in the input yaml (the same as the source).  Both of these options take a list to allow the same data to be entered into multiple input yamls with different naming conventions with a single generator configuration, and both can be used together. `targetPath` will be consumed before `targetName` and the provided paths and/or names will be searched in order until the first match is found.
 
