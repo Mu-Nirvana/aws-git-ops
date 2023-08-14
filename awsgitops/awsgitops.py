@@ -16,6 +16,7 @@ DEBUG = False
 
 # Application wide console object 
 console = Console()
+err_console = Console(stderr=True)
 
 # Color config
 class COLORS():
@@ -118,20 +119,77 @@ threads_are_alive = lambda threads: any([thread.is_alive() for thread in threads
 write_output = lambda output_yaml, output_file: file_ops.write_yaml(output_yaml, output_file)
 
 
+@click.group()
+def main():
+    pass
+
 # CLI command (the above methods can be used to implement the same behavior within other applications to allow easy automation)
 @click.command()
 @click.argument('config', type=click.Path(exists=True))
 @click.argument('input', type=click.Path(exists=True))
 @click.option('--output', default=None, help="Output file path")
-@click.option('--yes', is_flag=True, help="Automatically choose yes for writing file output")
-def main(config, input, output, yes):
-    """Regerate the INPUT yaml file with current data specified by CONFIG"""
+@click.option('--yes', is_flag=True, help="Confirm file write without prompt")
+@click.option('--stdout', is_flag=True, help="Write only the output file to stdout to allow output pipes")
+def single(config, input, output, yes):
+    """Regenrate a single INPUT yaml file"""
+    # Load yamls
+    generator_config, input_yamls, output_yamls = load(config, [input])
+
+    # Display loaded input
+    if not stdout:
+        console.print("\n[b u]Input yaml:")
+        console.print(yaml.dump(input_yamls[0], default_flow_style=False))
+
+    # Start Generators
+    status, log, threads, program_config = start_generators(generator_config, output_yamls)
+
+    #Wait for first generator to finish (testing)
+    if not stdout:
+        console.print()
+        with Live(generate_status_view(status), refresh_per_second=4) as live:
+            while threads_are_alive(threads):
+                while len(log) > 0:
+                    live.console.print(format_log(log.pop(0)))
+                live.update(generate_status_view(status))
+            while len(log) > 0:
+                live.console.print(format_log(log.pop(0)))
+            live.update(generate_status_view(status))
+
+    else:
+        while threads_are_alive(threads):
+            while len(log) > 0:
+                message = log.pop(0)
+                if message[0] != LogType.MESSAGE:
+                    err_console.print(format_log(message))
+        while len(log) > 0:
+            message = log.pop(0)
+            if message[0] != LogType.MESSAGE:
+                err_console.print(format_log(message))
+
+
+    # Display generated yaml
+    if not stdout:
+        console.print("[b u]Output yaml:")
+    console.print(yaml.dump(output_yamls[0], default_flow_style=False))
+
+    # If an output is provided confirm with user and write output
+    if output is not None:
+        if console.input(f"Would you like to write the output to {output}? ([bright_green]y[/]/[bright_red]n[/])").lower() == "y" or yes:
+            write_output(output_yamls[0], output)
+
+@click.command()
+@click.argument('config', type=click.Path(exists=True))
+@click.argument('input', type=click.Path(exists=True), nargs=-1)
+@click.option('--dryrun', is_flag=True, help="Don't write changes to files")
+@click.option('--yes', is_flag=True, help="Confirm file write without prompt")
+def batch(config, input, dryrun, yes):
+    """Regenrate multiple INPUT yaml files and write in place"""
     # Load yamls
     generator_config, input_yamls, output_yamls = load(config, [input])
 
     # Display loaded input
     console.print("\n[b u]Input yaml:")
-    console.print(yaml.dump(input_yamls[0], default_flow_style=False))
+    console.print(yaml.dump_all(input_yamls, default_flow_style=False))
 
     # Start Generators
     status, log, threads, program_config = start_generators(generator_config, output_yamls)
@@ -147,11 +205,16 @@ def main(config, input, output, yes):
             live.console.print(format_log(log.pop(0)))
         live.update(generate_status_view(status))
 
+
     # Display generated yaml
     console.print("[b u]Output yaml:")
-    console.print(yaml.dump(output_yamls[0], default_flow_style=False))
+    console.print(yaml.dump_all(output_yamls, default_flow_style=False))
 
     # If an output is provided confirm with user and write output
-    if output is not None:
-        if console.input(f"Would you like to write the output to {output}? ([bright_green]y[/]/[bright_red]n[/])").lower() == "y" or yes:
-            write_output(output_yamls[0], output)
+    if not dryrun:
+        for x, file in enumerate(input):
+            if console.input(f"Would you like to write the output to {file}? ([bright_green]y[/]/[bright_red]n[/])").lower() == "y" or yes:
+                write_output(output_yamls[x], file)
+
+main.add_command(single)
+main.add_command(batch)
