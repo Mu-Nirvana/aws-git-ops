@@ -26,7 +26,7 @@ class rds(spec):
         # Locate name matches
         matches = []
         for database in databases:
-            name = database["DatabaseName"]
+            name = database["DBClusterIdentifier"]
             if re.match(re_pattern, name):
                 matches.append(name)
 
@@ -60,7 +60,7 @@ class rds(spec):
 
         # Find our cluster and save the data
         for cluster in clusters:
-            if cluster["DatabaseName"] == cls.db:
+            if cluster["DBClusterIdentifier"] == cls.db:
                 cls.data = cluster
         
         cls.set_status(Status.GET_DATA, "Successful")
