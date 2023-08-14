@@ -8,6 +8,9 @@ The tool includes a CLI interface and a python package. Yaml files are consumed 
 - [Generators](#generators)
 - [Use](#Use)
 
+### Notes
+- All examples in this documentation are drawn from the [examples](examples)
+
 ## Installation and Setup
 The tool can be installed either through pip or cloning this repository. pip is recommended as you get both the CLI tool and python package configured out of the box.
 
@@ -104,27 +107,39 @@ Generators can be created very easily. The generator classes inherit from a pare
 
 ## Use
 ### CLI
-The CLI only supports single input files due technical limitations with variadic parameters. The tool uses this syntax:
-`awsgitops [options] CONFIG INPUT`
+The CLI has two commands, one for single processing, and one for batch processing. The CLI only supports single input files when using stdout or different output paths due technical limitations with variadic parameters.
+
+#### single
+`awsgitops single [OPTIONS] CONFIG INPUT`
 Where `CONFIG` is the configuration yaml, and `INPUT` is the input yaml to be modified.
-By default the output is written to the console. To ouput to a file use the `--output FILE` option. This will ask for a y/n confirmation that can be overridden with the `--yes` option.
+By default the output is not writen to a file, only displayed below the status UI. To ouput to a file use the `--output FILE` option. This will ask for a y/n confirmation that can be overridden with the `--yes` option.
+The `--stdout` option will not show the status UI and will only write the ouput file to stdout. Any log warnings or errors will be sent to stderr.
+
+#### batch
+`awsgitops batch [OPTIONS] CONFIG [INPUT]...`
+Where `CONFIG` is the configuration yaml, and `[INPUT]...` is a list of input yamls.
+This command writes the output to the input file. A y/n conifirmation is prompted for every file that can be overridden with the `--yes` option. To check the output without overwriting the input files the `--dryrun` option can be used to print the output without writing.
 
 ### Python
 The python package can also be used to run the tool, and allows multiple input yamls.
 Here is a bare-minimum example:
 ```python
+from awsgitops import awsgitops
+
 config = 'gen_config.yaml'
 inputs = ['first.yaml', 'second.yaml']
 # Load generators
-generator_config, input_yamls, output_yamls = load(config, inputs)
+generator_config, input_yamls, output_yamls = awsgitops.load(config, inputs)
 # Run generators
-status, log, threads, program_config = start_generators(generator_config, output_yamls)
+status, log, threads, program_config = awsgitops.start_generators(generator_config, output_yamls)
 # Wait for generators to finish
-while threads_are_alive(threads):
+while awsgitops.threads_are_alive(threads):
 	pass
 # Write the output to 
-for i, output_yaml in enumerate(output_yamls):
-	write_output(output_yaml, inputs[i])
+for i in range(len((inputs)):
+  # Only write if the file has been changed
+  if input_yamls[i] != output_yamls[i]:
+	  awsgitops.write_output(output_yamls[i], inputs[i])
 ```
 - `config` and `inputs` are file names or paths
 - `load(config, inputs)` takes the configuration and input yamls and loads the generator config and input yamls as python dictionaries and creates a copy of the inputs to modify
