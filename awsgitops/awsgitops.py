@@ -185,7 +185,7 @@ def single(config, input, output, yes):
 def batch(config, input, dryrun, yes):
     """Regenrate multiple INPUT yaml files and write in place"""
     # Load yamls
-    generator_config, input_yamls, output_yamls = load(config, [input])
+    generator_config, input_yamls, output_yamls = load(config, input)
 
     # Display loaded input
     console.print("\n[b u]Input yaml:")
