@@ -7,7 +7,7 @@ import re
 
 # Generator class for eks data
 class eks(spec):
-    eks_client = None
+    eks_client = boto3.client('eks')
     cluster = None
     data = None
 
@@ -17,7 +17,6 @@ class eks(spec):
         cls.set_status(Status.GET_INST, "Retrieving cluster")
 
         # Get clusters
-        cls.eks_client = boto3.client('eks')
         clusters = cls.eks_client.list_clusters()["clusters"]
 
         # Get name regex pattern
@@ -118,7 +117,6 @@ class eks(spec):
     @classmethod
     def reset(cls):
         super().reset()
-        cls.eks_client = None
         cls.cluster = None
         cls.data = None
 
