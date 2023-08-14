@@ -7,7 +7,7 @@ import re
 
 # Generator class for rds data
 class rds(spec):
-    rds_client = None
+    rds_client = boto3.client('rds')
     db = None
     data = None
 
@@ -17,7 +17,6 @@ class rds(spec):
         cls.set_status(Status.GET_INST, "Retrieving db")
 
         # Get rds clusters
-        cls.rds_client = boto3.client("rds")
         databases = cls.rds_client.describe_db_clusters()["DBClusters"]
 
         # Get name regex pattern
@@ -109,7 +108,6 @@ class rds(spec):
     @classmethod
     def reset(cls):
         super().reset()
-        cls.rds_client = None
         cls.db = None
         cls.data = None
 
