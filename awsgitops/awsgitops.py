@@ -130,7 +130,7 @@ def main():
 @click.option('--output', default=None, help="Output file path")
 @click.option('--yes', is_flag=True, help="Confirm file write without prompt")
 @click.option('--stdout', is_flag=True, help="Write only the output file to stdout to allow output pipes")
-def single(config, input, output, yes):
+def single(config, input, output, yes, stdout):
     """Regenrate a single INPUT yaml file"""
     # Load yamls
     generator_config, input_yamls, output_yamls = load(config, [input])
