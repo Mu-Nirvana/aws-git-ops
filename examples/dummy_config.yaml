@@ -1,0 +1,9 @@
+config:
+  SOMETHING: here
+dummy:
+  TARGET: 
+  - TEST 
+dummytwo:
+  TARGET:
+  - RANDOM
+  - SECOND

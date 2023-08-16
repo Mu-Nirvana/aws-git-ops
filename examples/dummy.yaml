@@ -1,0 +1,12 @@
+RANDOM:
+  FIRST: data1
+  SECOND: data2
+  THIRD: data3
+LIST:
+- 1
+- 2
+- 6
+TEST: data
+MAP:
+  VALUE: 1
+  OTHER: 2
