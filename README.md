@@ -17,7 +17,7 @@ The tool can be installed either through pip or cloning this repository. pip is 
 ### pip install
 To install the tool with pip run this in a terminal:<br>
 `pip install aws-gitops` <br>
-Note: if pip has been configured to search a different default index than the pypi index, add `-i https://pypi.python.org/simple` to the end of the command
+Note: if pip has been configured to search a different default index than the pypi index, add <br>`-i https://pypi.python.org/simple` to the end of the command
 
 ### Cloning
 The tool can be installed by cloning this repository:<br>
