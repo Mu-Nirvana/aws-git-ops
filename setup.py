@@ -26,7 +26,8 @@ setup(
     install_requires=[
         'rich',
         'click',
-        'yaml',
+        'PyYAML',
+        'boto3',
     ],
     description = "Automatically regenerate gitops application yaml configuration files with new infrastructure data.",
     long_description_content_type='text/markdown',

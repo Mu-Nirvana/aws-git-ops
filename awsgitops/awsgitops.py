@@ -11,7 +11,7 @@ from copy import deepcopy
 from time import sleep
 from .generators.genlauncher import Status, LogType
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 DEBUG = False
 
 # Application wide console object 
@@ -174,7 +174,7 @@ def single(config, input, output, yes, stdout):
 
     # If an output is provided confirm with user and write output
     if output is not None:
-        if console.input(f"Would you like to write the output to {output}? ([bright_green]y[/]/[bright_red]n[/])").lower() == "y" or yes:
+        if yes or console.input(f"Would you like to write the output to {output}? ([bright_green]y[/]/[bright_red]n[/])").lower() == "y":
             write_output(output_yamls[0], output)
 
 @click.command()
@@ -213,7 +213,7 @@ def batch(config, input, dryrun, yes):
     # If an output is provided confirm with user and write output
     if not dryrun:
         for x, file in enumerate(input):
-            if console.input(f"Would you like to write the output to {file}? ([bright_green]y[/]/[bright_red]n[/])").lower() == "y" or yes:
+            if yes or console.input(f"Would you like to write the output to {file}? ([bright_green]y[/]/[bright_red]n[/])").lower() == "y":
                 write_output(output_yamls[x], file)
 
 main.add_command(single)
