@@ -17,7 +17,7 @@ def is_present(yaml, *keys):
         return False
     else:
         if keys[0] not in yaml: return False
-        return read(yaml[keys[0]], *keys[1:])
+        return is_present(yaml[keys[0]], *keys[1:])
 
 # Find the path to a key in a yaml object
 def find(yaml, key, path=[]):
