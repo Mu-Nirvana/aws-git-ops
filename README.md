@@ -76,8 +76,8 @@ infraConfig:
   ENDPOINT: app-dev-wa3v1-redis.897hm.usw2.cache.amazon.com
 ```
 ### rds
-The rds generator class takes a `name` value that is a regex string used to match a rds cluster name. The generator will stop if there is not a singular match.
-The generator then retrieves the associated cluster description for the required values. The response format is documented [here](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/rds/client/describe_db_clusters.html), and any value can be consumed. The cluster dictionary is retrieved automatically by the `DBClusterIdentifier` value, thus the source path can begin at that level.
+The rds generator class takes a `name` value that is a regex string used to match a rds instance or cluster name. The generator will stop if there is not a singular match.
+The generator then retrieves the associated instance or cluster description for the required values. The response format is documented here: [clusters](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/rds/client/describe_db_clusters.html), [instances](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/rds/client/describe_db_instances.html), and any value can be consumed. The instance or cluster dictionary is retrieved automatically by the `DBInstanceIdentifier` or `DBClusterIdentifier` value, thus the source path can begin at that level.
 Here is an example configuration:
 ```yaml
 rds:
