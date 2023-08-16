@@ -9,15 +9,27 @@ import re
 class rds(spec):
     rds_client = boto3.client('rds')
     db = None
+    db_type = None
     data = None
 
-    # Get the rds cluster
+    # Get the rds database
     @classmethod
     def get_instance(cls):
         cls.set_status(Status.GET_INST, "Retrieving db")
+        
+        #Get type
+        cls.db_type = util.read(cls.config, "rds", "type")
 
-        # Get rds clusters
-        databases = cls.rds_client.describe_db_clusters()["DBClusters"]
+        if cls.db_type not in ["instance", "cluster"]:
+            cls.log_put(LogType.ERROR, f"{cls.db_type} is not a valid rds type. Try 'instance' or 'cluster'")
+            cls.set_status(Status.GET_INST, f"Invalid type")
+            return False
+
+        # Get rds clusters or instances
+        if cls.db_type == 'cluster':
+            databases = cls.rds_client.describe_db_clusters()["DBClusters"]
+        else:
+            databases = cls.rds_client.describe_db_instances()["DBInstances"]
 
         # Get name regex pattern
         re_pattern = util.read(cls.config, "rds", "name")
@@ -25,19 +37,19 @@ class rds(spec):
         # Locate name matches
         matches = []
         for database in databases:
-            name = database["DBClusterIdentifier"]
+            name = database["DBClusterIdentifier" if cls.db_type == 'cluster' else "DBInstanceIdentifier"]
             if re.match(re_pattern, name):
                 matches.append(name)
 
         if len(matches) != 1:
             if len(matches) == 0:
-                cls.log_put(LogType.ERROR, f"No RDS cluster names matched regex pattern {re_pattern}")
+                cls.log_put(LogType.ERROR, f"No RDS {cls.db_type} names matched regex pattern {re_pattern}")
             else:
-                cls.log_put(LogType.ERROR, f"Multiple RDS clusters matched: {matches}")
+                cls.log_put(LogType.ERROR, f"Multiple RDS {cls.db_type}s matched: {matches}")
             cls.set_status(Status.GET_INST, f"Failed to match a db")
             return False
 
-        # Save cluster name
+        # Save database name
         cls.db = matches[0]
         
         cls.set_status(Status.GET_INST, "db Successfully retrieved")
@@ -49,18 +61,21 @@ class rds(spec):
         cls.set_status(Status.OPERATIONAL, "N/A")
         return True
 
-    # Get the entire describe_clusters output for the cluster
+    # Get the entire describe_clusters/instances output for the database
     @classmethod
     def get_data(cls):
         cls.set_status(Status.GET_DATA, "Retrieving data")
 
-        # Get the clusters
-        clusters = cls.rds_client.describe_db_clusters()["DBClusters"]
+        # Get the databases
+        if cls.db_type == 'cluster':
+            databases = cls.rds_client.describe_db_clusters()["DBClusters"]
+        else:
+            databases = cls.rds_client.describe_db_instances()["DBInstances"]
 
-        # Find our cluster and save the data
-        for cluster in clusters:
-            if cluster["DBClusterIdentifier"] == cls.db:
-                cls.data = cluster
+        # Find our database and save the data
+        for database in databases:
+            if database["DBClusterIdentifier" if cls.db_type == 'cluster' else "DBInstanceIdentifier"] == cls.db:
+                cls.data = database
         
         cls.set_status(Status.GET_DATA, "Successful")
         return True
@@ -110,4 +125,5 @@ class rds(spec):
         super().reset()
         cls.db = None
         cls.data = None
+        cls.db_type = None
 
