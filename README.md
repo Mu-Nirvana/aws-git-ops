@@ -15,14 +15,15 @@ The tool includes a CLI interface and a python package. Yaml files are consumed 
 The tool can be installed either through pip or cloning this repository. pip is recommended as you get both the CLI tool and python package configured out of the box.
 
 ### pip install
-To install the tool with pip run this in a terminal:
-`pip install aws-gitops`
+To install the tool with pip run this in a terminal:<br>
+`pip install aws-gitops` <br>
+Note: if pip has been configured to search a different default index than the pypi index, add `-i https://pypi.python.org/simple` to the end of the command
 
 ### Cloning
-The tool can be installed by cloning this repository:
-`git clone https://github.com/Mu-Nirvana/aws-git-ops.git`
-Then running the install script:
-`python3 setup.py install`
+The tool can be installed by cloning this repository:<br>
+`git clone https://github.com/Mu-Nirvana/aws-git-ops.git`<br>
+Then running the install script:<br>
+`python3 setup.py install`<br>
 
 ## Configuration
 The tool uses BOTO3 to access aws resources so credentials must be configured. Additionally the generators in use must be configured.
@@ -110,18 +111,18 @@ Generators can be created very easily. The generator classes inherit from a pare
 The CLI has two commands, one for single processing, and one for batch processing. The CLI only supports single input files when using stdout or different output paths due technical limitations with variadic parameters.
 
 #### single
-`awsgitops single [OPTIONS] CONFIG INPUT`
-Where `CONFIG` is the configuration yaml, and `INPUT` is the input yaml to be modified.
+`awsgitops single [OPTIONS] CONFIG INPUT`<br>
+Where `CONFIG` is the configuration yaml, and `INPUT` is the input yaml to be modified.<br>
 By default the output is not writen to a file, only displayed below the status UI. To ouput to a file use the `--output FILE` option. This will ask for a y/n confirmation that can be overridden with the `--yes` option.
-The `--stdout` option will not show the status UI and will only write the ouput file to stdout. Any log warnings or errors will be sent to stderr.
+The `--stdout` option will not show the status UI and will only write the ouput file to stdout. Any log warnings or errors will be sent to stderr.<br>
 
 #### batch
-`awsgitops batch [OPTIONS] CONFIG [INPUT]...`
-Where `CONFIG` is the configuration yaml, and `[INPUT]...` is a list of input yamls.
+`awsgitops batch [OPTIONS] CONFIG [INPUT]...`<br>
+Where `CONFIG` is the configuration yaml, and `[INPUT]...` is a list of input yamls.<br>
 This command writes the output to the input file. A y/n conifirmation is prompted for every file that can be overridden with the `--yes` option. To check the output without overwriting the input files the `--dryrun` option can be used to print the output without writing.
 
 ### Python
-The python package can also be used to run the tool, and allows multiple input yamls.
+The python package can also be used to run the tool, and allows multiple input yamls.<br>
 Here is a bare-minimum example:
 ```python
 from awsgitops import awsgitops
