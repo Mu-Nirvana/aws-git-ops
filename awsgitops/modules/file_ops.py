@@ -22,11 +22,11 @@ def get_file(filename):
 
 #Retrieve yaml from file
 def get_yaml(yamlFile):
-    return PARSER.load(open(yamlFile))
+    return PARSER.load(open(expand_path(yamlFile)))
 
 #Write a python object to a yaml file
 def write_yaml(yamlObj, filename):
-    return PARSER.dump(yamlObj, open(filename, 'w+'))
+    return PARSER.dump(yamlObj, open(expand_path(filename), 'w+'))
 
 #Write to a file
 def write_file(filename, contents):
