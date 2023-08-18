@@ -2,6 +2,7 @@ RANDOM:
   FIRST: data1
   SECOND: data2
   THIRD: data3
+# A test comment
 LIST:
 - 1
 - 2
