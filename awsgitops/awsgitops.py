@@ -2,7 +2,6 @@ from .modules import *
 from .generators import genlauncher
 import sys
 import click
-import yaml
 from rich.console import Console
 from rich.table import Table
 from rich.live import Live
@@ -11,7 +10,7 @@ from copy import deepcopy
 from time import sleep
 from .generators.genlauncher import Status, LogType
 
-__version__ = "1.2.1"
+__version__ = "1.3.0"
 DEBUG = False
 
 # Application wide console object 
@@ -138,7 +137,7 @@ def single(config, input, output, yes, stdout):
     # Display loaded input
     if not stdout:
         console.print("\n[b u]Input yaml:")
-        console.print(yaml.dump(input_yamls[0], default_flow_style=False))
+        console.print(util.dump(input_yamls[0]))
 
     # Start Generators
     status, log, threads, program_config = start_generators(generator_config, output_yamls)
@@ -170,7 +169,7 @@ def single(config, input, output, yes, stdout):
     # Display generated yaml
     if not stdout:
         console.print("[b u]Output yaml:")
-    console.print(yaml.dump(output_yamls[0], default_flow_style=False))
+    console.print(util.dump(output_yamls[0]))
 
     # If an output is provided confirm with user and write output
     if output is not None:
@@ -189,7 +188,7 @@ def batch(config, input, dryrun, yes):
 
     # Display loaded input
     console.print("\n[b u]Input yaml:")
-    console.print(yaml.dump_all(input_yamls, default_flow_style=False))
+    console.print(util.dump_all(input_yamls))
 
     # Start Generators
     status, log, threads, program_config = start_generators(generator_config, output_yamls)
@@ -208,7 +207,7 @@ def batch(config, input, dryrun, yes):
 
     # Display generated yaml
     console.print("[b u]Output yaml:")
-    console.print(yaml.dump_all(output_yamls, default_flow_style=False))
+    console.print(util.dump_all(output_yamls))
 
     # If an output is provided confirm with user and write output
     if not dryrun:

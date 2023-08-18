@@ -1,6 +1,19 @@
-import yaml
+from ruamel.yaml import YAML
+from ruamel.yaml.compat import StringIO
 from os.path import expanduser, exists, abspath
 from os import getcwd, remove
+
+class YamlParser(YAML):
+    def dump(self, data, stream=None, **kw):
+        inefficient = False
+        if stream is None:
+            inefficient = True
+            stream = StringIO()
+        YAML.dump(self, data, stream, **kw)
+        if inefficient:
+            return stream.getvalue()
+
+PARSER = YamlParser()
 
 #Get a file
 def get_file(filename):
@@ -9,12 +22,11 @@ def get_file(filename):
 
 #Retrieve yaml from file
 def get_yaml(yamlFile):
-  with open(expand_path(yamlFile)) as file:
-    return yaml.safe_load(file)
+    return PARSER.load(open(yamlFile))
 
 #Write a python object to a yaml file
 def write_yaml(yamlObj, filename):
-    return write_file(filename, yaml.dump(yamlObj))
+    return PARSER.dump(yamlObj, open(filename, 'w+'))
 
 #Write to a file
 def write_file(filename, contents):

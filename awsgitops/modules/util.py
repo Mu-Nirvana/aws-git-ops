@@ -1,3 +1,5 @@
+from .file_ops import PARSER
+
 # Report an error and exit the program
 def error(contents):
     print(f"ERROR: {contents}\nExiting program!")
@@ -43,3 +45,19 @@ def write(yaml, value, *keys):
     else:
         yaml[keys[0]] = write(yaml[keys[0]], value, *keys[1:])
         return yaml
+
+# Dump multiple file outputs
+def dump_all(yamls):
+    output = ""
+    if len(yamls) == 1:
+        return dump(yamls[0])
+
+    for yaml in yamls[:-1]:
+        output += dump(yaml)
+        output += "\n---\n"
+
+    output += yamls[-1]
+    return output
+
+def dump(yaml):
+    return PARSER.dump(yaml)
